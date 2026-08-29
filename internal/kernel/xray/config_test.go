@@ -465,6 +465,34 @@ func TestBuildConfig_Shadowsocks_MultiUserTraditional(t *testing.T) {
 	}
 }
 
+func TestBuildConfig_Shadowsocks_ProxyProtocol(t *testing.T) {
+	nc := panel.NodeConfig{
+		Protocol:            "shadowsocks",
+		ServerPort:          8388,
+		Cipher:              "aes-128-gcm",
+		AcceptProxyProtocol: true,
+	}
+	cfg := buildConfig(testKernelCfg, testNodeSpec(&nc), testUsers, kernel.TLSCert{})
+	data, _ := json.Marshal(cfg)
+
+	var parsed map[string]interface{}
+	json.Unmarshal(data, &parsed)
+
+	inbounds := parsed["inbounds"].([]interface{})
+	ib := inbounds[0].(map[string]interface{})
+	streamSettings := ib["streamSettings"].(map[string]interface{})
+	if streamSettings["network"] != "tcp" {
+		t.Fatalf("expected tcp stream network, got %v", streamSettings["network"])
+	}
+	sockopt := streamSettings["sockopt"].(map[string]interface{})
+	if sockopt["acceptProxyProtocol"] != true {
+		t.Fatalf("expected acceptProxyProtocol=true, got %v", sockopt["acceptProxyProtocol"])
+	}
+	if sockopt["reusePort"] != true {
+		t.Fatalf("expected reusePort=true to be preserved, got %v", sockopt["reusePort"])
+	}
+}
+
 func TestBuildConfig_Shadowsocks_MultiUser(t *testing.T) {
 	nc := panel.NodeConfig{
 		Protocol:   "shadowsocks",

@@ -359,6 +359,7 @@ func buildShadowsocks(base M, nc *model.NodeSpec, users []model.UserSpec) M {
 			"network": "tcp,udp",
 		}
 	}
+	applyStreamSettings(base, nc, kernel.TLSCert{})
 	return base
 }
 
